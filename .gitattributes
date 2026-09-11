@@ -1,0 +1,19 @@
+# Normalise line endings so a repo authored on Windows builds on Linux.
+#
+# build.sh runs on Vercel and on GitHub Actions, both Linux. A shell script
+# checked in with CRLF fails there with "bad interpreter: bash^M", so the
+# line ending is forced to LF regardless of the contributor's platform or
+# core.autocrlf setting. The same applies to the YAML and JSON the build
+# tooling reads.
+
+* text=auto eol=lf
+
+*.sh   text eol=lf
+*.yml  text eol=lf
+*.yaml text eol=lf
+*.json text eol=lf
+*.py   text eol=lf
+*.md   text eol=lf
+*.html text eol=lf
+
+*.png binary

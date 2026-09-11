@@ -60,41 +60,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # main.py exits 1 when an acceptance check fails. For this study that is
-      # the expected result: the base case is an audit of an as-specified
-      # design and it finds two genuine failures. A failing CHECK is an
-      # engineering finding, not a broken build, so exit 1 is accepted here
-      # while exit 2 (bad input, missing file) still fails the job.
-      - name: Generate the base-case study
-        run: |
-          python main.py || status=$?
-          if [ "${status:-0}" -gt 1 ]; then
-            echo "::error::main.py failed with exit ${status} (input or tool error)"
-            exit "${status}"
-          fi
-          echo "Base case generated (exit ${status:-0})."
-
-      - name: Generate the coordinated design
-        run: python main.py --settings recommended --outdir output/recommended
-
-      - name: Generate the sensitivity scenarios
-        run: |
-          for s in weak_source m1_dol worst_case_start; do
-            python main.py --scenario "$s" --outdir "output/scenario-$s" --no-figures \
-              || status=$?
-            if [ "${status:-0}" -gt 1 ]; then exit "${status}"; fi
-            unset status
-          done
-
-      # The Pages site root is the interactive viewer, so the bare URL opens
-      # the study. The report, figures and CSV exports stay reachable beneath.
-      - name: Lay out the site
-        run: |
-          cp output/viewer/index.html output/index.html
-          touch output/.nojekyll
-          echo "--- site contents ---"
-          find output -maxdepth 2 -type f | sort | head -40
-          du -sh output
+      # build.sh is the single definition of a build, shared with the Vercel
+      # deployment, so the two cannot drift apart. It tolerates main.py exiting
+      # 1 (a failing acceptance check is an engineering finding, not a broken
+      # build) while still failing on exit 2.
+      - name: Build the site
+        run: PYTHON=python bash build.sh
 
       - uses: actions/upload-pages-artifact@v3
         with:
