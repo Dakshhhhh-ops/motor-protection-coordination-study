@@ -1,0 +1,7 @@
+numpy>=1.24
+matplotlib>=3.7
+PyYAML>=6.0
+pandas>=2.0
+
+# Testing only
+pytest>=7.4

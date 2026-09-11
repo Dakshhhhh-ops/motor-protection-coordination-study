@@ -1,0 +1,52 @@
+# ---------------------------------------------------------------------------
+# Cable library: copper conductor, XLPE insulated, 0.6/1 kV, 3-core armoured
+# ---------------------------------------------------------------------------
+#
+# r20_ohm_km  Maximum DC resistance at 20 degC, IEC 60228 Table 2 (class 2
+#             stranded copper). STANDARD DATA.
+#
+# x_ohm_km    Positive-sequence reactance at 50 Hz. This is a function of the
+#             conductor geometry inside the specific cable construction and is
+#             NOT given by a standard.  VENDOR DATA -- replace from the
+#             manufacturer's datasheet for the cable actually purchased.
+#
+# iz_base_a   Tabulated continuous current-carrying capacity, three loaded
+#             conductors, installation method E (free air / perforated tray),
+#             30 degC ambient, per IEC 60364-5-52 Annex B. Derated in
+#             src/checks.py for 40 degC ambient and for grouping.
+#             VENDOR DATA -- the tabulated value depends on the exact
+#             installation method and must be confirmed against the project
+#             cable schedule.
+#
+# AC resistance is taken equal to DC resistance. At 50 Hz and these
+# cross-sections the skin and proximity effects raise R by under 2 per cent
+# (IEC 60287-1-1), which is immaterial next to the temperature correction from
+# 20 to 90 degC (+27.5 per cent) and is conservative for voltage drop.
+
+meta:
+  conductor: copper
+  insulation: XLPE
+  voltage_grade: 0.6/1 kV
+  cores: 3
+  frequency_hz: 50
+  r_reference_temp_c: 20
+  iz_installation_method: E (free air / perforated tray, 30 degC ambient)
+  r20_source: IEC 60228 Table 2, class 2 stranded copper
+  x_source: VENDOR DATA - representative 3-core XLPE/SWA construction
+  iz_source: VENDOR DATA - representative, IEC 60364-5-52 Annex B method E
+
+sizes:
+  # mm2:  [r20_ohm_km, x_ohm_km, iz_base_a]
+  4:      [4.6100, 0.110, 36]
+  6:      [3.0800, 0.100, 46]
+  10:     [1.8300, 0.094, 63]
+  16:     [1.1500, 0.090, 85]
+  25:     [0.7270, 0.086, 112]
+  35:     [0.5240, 0.083, 138]
+  50:     [0.3870, 0.083, 168]
+  70:     [0.2680, 0.082, 213]
+  95:     [0.1930, 0.082, 258]
+  120:    [0.1530, 0.080, 299]
+  150:    [0.1240, 0.080, 344]
+  185:    [0.0991, 0.080, 392]
+  240:    [0.0754, 0.079, 461]

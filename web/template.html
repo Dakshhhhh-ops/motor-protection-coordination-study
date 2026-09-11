@@ -1,0 +1,953 @@
+<title>MCC-01 Coordination Study</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Serif:ital,wght@0,400;0,500;1,400&display=swap">
+<style>
+/* ---------------------------------------------------------------------------
+   Tokens. Light is the base; the two dark blocks redefine only colours, so a
+   component never carries a colour that exists in one theme alone.
+   Neutrals carry a slight cool bias - technical drawing paper, switchgear
+   enamel - rather than a flat grey. The accent and the status hues are the
+   same values the matplotlib figures use, so the viewer and the printed
+   report read as one system.
+--------------------------------------------------------------------------- */
+:root {
+  color-scheme: light;
+  --ground:     #eef1f5;
+  --surface:    #ffffff;
+  --surface-2:  #f6f8fb;
+  --surface-3:  #eef2f7;
+  --ink:        #0d1218;
+  --ink-2:      #515d6d;
+  --ink-3:      #8792a1;
+  --rule:       #d8dfe8;
+  --rule-2:     #e9eef4;
+  --accent:     #2a78d6;
+  --accent-2:   #1c5cab;
+  --accent-soft:#e6eefa;
+  --pass:       #0a8a0a;
+  --marg:       #9a6a06;
+  --fail:       #c73434;
+  --pass-soft:  #e4f4e4;
+  --marg-soft:  #fbf0d8;
+  --fail-soft:  #fae6e6;
+  --shadow:     0 1px 2px rgba(13,18,24,.06), 0 8px 24px rgba(13,18,24,.05);
+
+  --s-device:   var(--accent);
+  --s-thermal:  #7aa9e4;
+  --s-damage:   var(--fail);
+  --s-damagec:  var(--fail);
+  --s-feeder:   #3d4753;
+  --s-env:      #b9cde8;
+  --s-env-fill: rgba(42,120,214,.10);
+  --m1: #2a78d6; --m2: #eb6834; --m3: #1baf7a; --m4: #c98500; --m5: #d55181;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ground:     #0f1318;
+    --surface:    #171c23;
+    --surface-2:  #1d232b;
+    --surface-3:  #232a34;
+    --ink:        #eaf0f7;
+    --ink-2:      #9aa6b6;
+    --ink-3:      #6c7787;
+    --rule:       #2c3440;
+    --rule-2:     #222932;
+    --accent:     #5a9bea;
+    --accent-2:   #8bbaf2;
+    --accent-soft:#16263a;
+    --pass:       #46c246;
+    --marg:       #e0a524;
+    --fail:       #ec6b6b;
+    --pass-soft:  #12281a;
+    --marg-soft:  #2c2413;
+    --fail-soft:  #2e1a1c;
+    --shadow:     0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.3);
+    --s-thermal:  #4d7cb5;
+    --s-feeder:   #c2ccd8;
+    --s-env:      #34506f;
+    --s-env-fill: rgba(90,155,234,.13);
+    --m1: #5a9bea; --m2: #ef7f52; --m3: #2ecb92; --m4: #dfa021; --m5: #e37ba4;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ground:     #0f1318;
+  --surface:    #171c23;
+  --surface-2:  #1d232b;
+  --surface-3:  #232a34;
+  --ink:        #eaf0f7;
+  --ink-2:      #9aa6b6;
+  --ink-3:      #6c7787;
+  --rule:       #2c3440;
+  --rule-2:     #222932;
+  --accent:     #5a9bea;
+  --accent-2:   #8bbaf2;
+  --accent-soft:#16263a;
+  --pass:       #46c246;
+  --marg:       #e0a524;
+  --fail:       #ec6b6b;
+  --pass-soft:  #12281a;
+  --marg-soft:  #2c2413;
+  --fail-soft:  #2e1a1c;
+  --shadow:     0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.3);
+  --s-thermal:  #4d7cb5;
+  --s-feeder:   #c2ccd8;
+  --s-env:      #34506f;
+  --s-env-fill: rgba(90,155,234,.13);
+  --m1: #5a9bea; --m2: #ef7f52; --m3: #2ecb92; --m4: #dfa021; --m5: #e37ba4;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 14px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+.mono, .num { font-family: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; font-variant-numeric: tabular-nums; }
+h1, h2, h3, h4 { margin: 0; text-wrap: balance; font-weight: 600; letter-spacing: -.01em; }
+p { margin: 0 0 .85em; }
+a { color: var(--accent); }
+
+.eyebrow {
+  font-size: 10.5px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+/* --- top bar ------------------------------------------------------------ */
+.topbar {
+  position: sticky; top: 0; z-index: 30;
+  background: var(--surface);
+  border-bottom: 1px solid var(--rule);
+  padding: 14px 22px;
+  display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+}
+.topbar .ident { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.topbar h1 { font-size: 16px; }
+.topbar .sub { font-size: 11.5px; color: var(--ink-2); }
+.topbar .spacer { flex: 1 1 auto; }
+
+.verdict-pill {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 6px 13px; border-radius: 3px;
+  font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase;
+  border: 1px solid;
+}
+.v-PASS     { color: var(--pass); background: var(--pass-soft); border-color: color-mix(in srgb, var(--pass) 35%, transparent); }
+.v-MARGINAL { color: var(--marg); background: var(--marg-soft); border-color: color-mix(in srgb, var(--marg) 35%, transparent); }
+.v-FAIL     { color: var(--fail); background: var(--fail-soft); border-color: color-mix(in srgb, var(--fail) 35%, transparent); }
+.v-INFO     { color: var(--ink-2); background: var(--surface-3); border-color: var(--rule); }
+.v-NA       { color: var(--ink-3); background: transparent; border-color: var(--rule); }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex: none; }
+
+.scenario-tag {
+  font-size: 11px; padding: 4px 9px; border-radius: 3px;
+  background: var(--accent-soft); color: var(--accent-2);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  font-family: "IBM Plex Mono", monospace;
+}
+
+/* --- summary strip ------------------------------------------------------ */
+.strip {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  background: var(--surface); border-bottom: 1px solid var(--rule);
+}
+.stat { padding: 13px 22px; border-right: 1px solid var(--rule-2); }
+.stat:last-child { border-right: 0; }
+.stat .k { font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); }
+.stat .v { font-size: 20px; font-weight: 600; letter-spacing: -.02em; margin-top: 2px; }
+.stat .u { font-size: 12px; font-weight: 400; color: var(--ink-2); margin-left: 2px; }
+.stat .n { font-size: 11px; color: var(--ink-3); }
+
+/* --- shell -------------------------------------------------------------- */
+.shell { display: flex; align-items: flex-start; gap: 0; }
+.rail {
+  position: sticky; top: 57px; align-self: flex-start;
+  width: 232px; flex: none; padding: 16px 12px 40px;
+  border-right: 1px solid var(--rule); background: var(--surface);
+  min-height: calc(100vh - 57px);
+}
+.rail .eyebrow { padding: 0 10px; margin: 14px 0 6px; }
+.rail .eyebrow:first-child { margin-top: 0; }
+.navitem {
+  display: flex; align-items: center; gap: 9px; width: 100%;
+  padding: 8px 10px; border: 0; border-radius: 4px; background: transparent;
+  color: var(--ink); font: inherit; font-size: 13px; text-align: left; cursor: pointer;
+}
+.navitem:hover { background: var(--surface-3); }
+.navitem[aria-current="true"] { background: var(--accent-soft); color: var(--accent-2); font-weight: 600; }
+.navitem .tag { font-family: "IBM Plex Mono", monospace; font-size: 12px; font-weight: 600; width: 26px; flex: none; }
+.navitem .lbl { flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12.5px; }
+.navitem:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+main { flex: 1 1 auto; min-width: 0; padding: 22px 26px 72px; }
+.view { display: flex; flex-direction: column; gap: 20px; max-width: 1180px; }
+
+/* --- panels ------------------------------------------------------------- */
+.panel { background: var(--surface); border: 1px solid var(--rule); border-radius: 5px; }
+.panel > header {
+  padding: 12px 16px; border-bottom: 1px solid var(--rule-2);
+  display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;
+}
+.panel > header h2 { font-size: 13.5px; }
+.panel > header .note { font-size: 11.5px; color: var(--ink-3); }
+.panel .body { padding: 16px; }
+.panel .body.flush { padding: 0; }
+
+.pagehead { display: flex; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+.pagehead h2 { font-size: 21px; letter-spacing: -.02em; }
+.pagehead .rating { font-size: 12.5px; color: var(--ink-2); margin-top: 3px; }
+
+/* --- tables ------------------------------------------------------------- */
+.tablewrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 12.5px; }
+th, td { text-align: left; padding: 7px 12px; border-bottom: 1px solid var(--rule-2); vertical-align: top; }
+th {
+  font-size: 10.5px; letter-spacing: .07em; text-transform: uppercase;
+  color: var(--ink-3); font-weight: 600; white-space: nowrap;
+  background: var(--surface-2); border-bottom: 1px solid var(--rule);
+  position: sticky; top: 0;
+}
+tbody tr:last-child td { border-bottom: 0; }
+tbody tr:hover td { background: var(--surface-2); }
+td.num, th.num { text-align: right; font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums; white-space: nowrap; }
+td.tag { font-family: "IBM Plex Mono", monospace; font-weight: 600; }
+.badge {
+  display: inline-block; padding: 1px 7px; border-radius: 3px;
+  font-size: 10.5px; font-weight: 600; letter-spacing: .04em; border: 1px solid;
+}
+
+/* --- setting cards ------------------------------------------------------ */
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 1px; background: var(--rule-2); }
+.card { background: var(--surface); padding: 14px 16px; }
+.card .ansi {
+  font-family: "IBM Plex Mono", monospace; font-size: 11px; font-weight: 600;
+  color: var(--accent-2); background: var(--accent-soft);
+  padding: 1px 6px; border-radius: 2px; letter-spacing: .03em;
+}
+.card h4 { font-size: 12px; margin: 7px 0 9px; color: var(--ink-2); font-weight: 500; }
+.card .big { font-size: 23px; font-weight: 600; letter-spacing: -.025em; font-family: "IBM Plex Mono", monospace; }
+.card .big .u { font-size: 12px; font-weight: 400; color: var(--ink-2); margin-left: 3px; font-family: "IBM Plex Sans", sans-serif; }
+.card dl { margin: 10px 0 0; display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; font-size: 11.5px; }
+.card dt { color: var(--ink-3); }
+.card dd { margin: 0; text-align: right; font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums; }
+
+/* --- meters ------------------------------------------------------------- */
+.meter { height: 6px; border-radius: 3px; background: var(--surface-3); position: relative; overflow: hidden; margin-top: 8px; }
+.meter i { position: absolute; inset: 0 auto 0 0; border-radius: 3px; display: block; }
+.meter .thresh { position: absolute; top: -2px; bottom: -2px; width: 1.5px; background: var(--ink-3); }
+
+/* --- charts ------------------------------------------------------------- */
+.chartwrap { position: relative; }
+svg.chart { display: block; width: 100%; height: auto; touch-action: none; }
+.chart .grid       { stroke: var(--rule-2); stroke-width: 1; fill: none; }
+.chart .grid.major { stroke: var(--rule); }
+.chart .frame      { stroke: var(--rule); fill: none; stroke-width: 1; }
+.chart .axtext     { fill: var(--ink-3); font-size: 10px; font-family: "IBM Plex Mono", monospace; }
+.chart .axtitle    { fill: var(--ink-2); font-size: 11px; font-family: "IBM Plex Sans", sans-serif; }
+.chart .curve      { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.chart .curve.off  { display: none; }
+.chart .envfill    { fill: var(--s-env-fill); stroke: none; }
+.chart .envline    { fill: none; stroke: var(--s-env); stroke-width: 1.5; }
+.chart .marker     { stroke: var(--ink-3); stroke-width: 1; stroke-dasharray: 2 3; }
+.chart .markertext { fill: var(--ink-3); font-size: 9.5px; font-family: "IBM Plex Mono", monospace; }
+.chart .cursor     { stroke: var(--accent); stroke-width: 1; stroke-dasharray: 3 3; }
+.chart .thresh     { stroke: var(--fail); stroke-width: 1.5; fill: none; }
+.chart .threshsoft { stroke: var(--marg); stroke-width: 1; stroke-dasharray: 4 3; fill: none; }
+.c-device  { stroke: var(--s-device); }
+.c-thermal { stroke: var(--s-thermal); stroke-dasharray: 5 4; stroke-width: 1.5; }
+.c-damage  { stroke: var(--s-damage); }
+.c-damagec { stroke: var(--s-damage); stroke-dasharray: 6 4; stroke-width: 1.5; }
+.c-feeder  { stroke: var(--s-feeder); stroke-dasharray: 8 4; }
+.c-m1 { stroke: var(--m1); } .c-m2 { stroke: var(--m2); } .c-m3 { stroke: var(--m3); }
+.c-m4 { stroke: var(--m4); } .c-m5 { stroke: var(--m5); }
+
+.legend { display: flex; flex-wrap: wrap; gap: 6px; padding: 12px 16px 0; }
+.legend button {
+  display: inline-flex; align-items: center; gap: 7px;
+  border: 1px solid var(--rule); background: var(--surface-2); color: var(--ink-2);
+  border-radius: 3px; padding: 4px 9px; font: inherit; font-size: 11.5px; cursor: pointer;
+}
+.legend button:hover { border-color: var(--ink-3); }
+.legend button[aria-pressed="false"] { opacity: .42; }
+.legend button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.legend .swatch { width: 14px; height: 0; border-top-width: 2.5px; border-top-style: solid; flex: none; }
+
+.readout {
+  display: flex; flex-wrap: wrap; gap: 0; margin: 12px 16px 16px;
+  border: 1px solid var(--rule); border-radius: 4px; background: var(--surface-2);
+  overflow: hidden;
+}
+.readout .cell { padding: 7px 13px; border-right: 1px solid var(--rule-2); flex: 1 1 auto; min-width: 104px; }
+.readout .cell:last-child { border-right: 0; }
+.readout .k { font-size: 9.5px; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-3); display: block; }
+.readout .v { font-family: "IBM Plex Mono", monospace; font-size: 13px; font-variant-numeric: tabular-nums; }
+.readout .cell.lead { background: var(--accent-soft); }
+.readout .cell.lead .v { color: var(--accent-2); font-weight: 600; }
+
+/* --- prose -------------------------------------------------------------- */
+.prose {
+  font-family: "IBM Plex Serif", Georgia, serif; font-size: 14px; line-height: 1.68;
+  color: var(--ink); max-width: 68ch;
+}
+.prose h4 {
+  font-family: "IBM Plex Sans", sans-serif; font-size: 11px; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--ink-3); margin: 18px 0 5px; font-weight: 600;
+}
+.prose h4:first-child { margin-top: 0; }
+.prose p { margin: 0; }
+
+.callout {
+  border-left: 3px solid var(--accent); background: var(--surface-2);
+  padding: 11px 15px; font-size: 12.5px; color: var(--ink-2); border-radius: 0 4px 4px 0;
+}
+.callout.warn { border-left-color: var(--fail); }
+.callout.soft { border-left-color: var(--marg); }
+.callout strong { color: var(--ink); }
+
+.findings { display: flex; flex-direction: column; }
+.finding {
+  display: grid; grid-template-columns: 92px 1fr; gap: 4px 14px;
+  padding: 13px 16px; border-bottom: 1px solid var(--rule-2);
+}
+.finding:last-child { border-bottom: 0; }
+.finding .who { font-family: "IBM Plex Mono", monospace; font-size: 11.5px; color: var(--ink-3); }
+.finding .what { font-size: 13px; font-weight: 500; }
+.finding .val { grid-column: 2; font-family: "IBM Plex Mono", monospace; font-size: 12px; color: var(--ink-2); }
+.finding .note { grid-column: 2; font-size: 12px; color: var(--ink-2); margin-top: 3px; }
+
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 5px 18px; font-size: 12.5px; }
+.kv dt { color: var(--ink-2); }
+.kv dd { margin: 0; text-align: right; font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums; }
+
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+.formula {
+  font-family: "IBM Plex Mono", monospace; font-size: 12px; line-height: 1.7;
+  background: var(--surface-2); border: 1px solid var(--rule-2); border-left: 3px solid var(--accent);
+  padding: 11px 14px; border-radius: 0 4px 4px 0; white-space: pre; overflow-x: auto; color: var(--ink-2);
+}
+.footer { padding: 26px 26px 60px; color: var(--ink-3); font-size: 11.5px; max-width: 1180px; }
+
+@media (max-width: 880px) {
+  .shell { flex-direction: column; }
+  .rail {
+    position: static; width: 100%; min-height: 0; border-right: 0;
+    border-bottom: 1px solid var(--rule); display: flex; gap: 4px;
+    overflow-x: auto; padding: 10px 12px;
+  }
+  .rail .eyebrow { display: none; }
+  .navitem { width: auto; flex: none; }
+  .navitem .lbl { display: none; }
+  main { padding: 16px 14px 60px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+<div class="topbar">
+  <div class="ident">
+    <h1 id="ttl">Coordination Study</h1>
+    <span class="sub" id="sub"></span>
+  </div>
+  <div class="spacer"></div>
+  <span class="scenario-tag" id="scenario" hidden></span>
+  <span class="verdict-pill" id="verdict"><span class="dot"></span><span id="verdicttext"></span></span>
+</div>
+
+<div class="strip" id="strip"></div>
+
+<div class="shell">
+  <nav class="rail" id="rail" aria-label="Study sections"></nav>
+  <main id="pane"></main>
+</div>
+
+<script>
+"use strict";
+const D = __STUDY_DATA__;
+
+/* ---- helpers ---------------------------------------------------------- */
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const el = (t, a, h) => { const n = document.createElement(t); if (a) for (const k in a) { if (k === "class") n.className = a[k]; else if (k === "html") n.innerHTML = a[k]; else n.setAttribute(k, a[k]); } if (h != null) n.innerHTML = h; return n; };
+const fmt = (v, d = 0) => v == null ? "&ndash;" : Number(v).toLocaleString("en-GB", { minimumFractionDigits: d, maximumFractionDigits: d });
+const vClass = v => "v-" + (String(v) === "n/a" ? "NA" : String(v));
+
+function badge(v) {
+  const cls = v === "n/a" ? "v-NA" : "v-" + v;
+  return `<span class="badge ${cls}">${esc(v)}</span>`;
+}
+function table(cols, rows) {
+  const head = cols.map(c => `<th class="${c.num ? "num" : ""}">${esc(c.label)}</th>`).join("");
+  const body = rows.map(r => "<tr>" + cols.map((c, i) =>
+    `<td class="${c.num ? "num" : ""}${c.tag ? " tag" : ""}">${r[i]}</td>`).join("") + "</tr>").join("");
+  return `<div class="tablewrap"><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
+}
+function panel(title, note, bodyHtml, flush) {
+  return `<section class="panel"><header><h2>${esc(title)}</h2>${note ? `<span class="note">${esc(note)}</span>` : ""}</header>
+    <div class="body${flush ? " flush" : ""}">${bodyHtml}</div></section>`;
+}
+function checksTable(list) {
+  return table(
+    [{ label: "ID" }, { label: "Check" }, { label: "Criterion" }, { label: "Calculated" }, { label: "Verdict" }, { label: "Reference" }],
+    list.map(c => [`<span class="mono">${esc(c.id)}</span>`, esc(c.name), esc(c.criterion), `<span class="mono">${esc(c.value)}</span>`, badge(c.verdict), esc(c.reference)])
+  );
+}
+
+/* ---- log-log chart ----------------------------------------------------- */
+const PLOT = D.plot;
+const L10 = Math.log10;
+
+function tccChart(series, markers, opts) {
+  opts = opts || {};
+  const W = 900, H = 620, pl = 58, pr = 18, pt = 14, pb = 44;
+  const x0 = L10(PLOT.iMin), x1 = L10(PLOT.iMax);
+  const y0 = L10(PLOT.tMin), y1 = L10(PLOT.tMax);
+  const sx = i => pl + (L10(i) - x0) / (x1 - x0) * (W - pl - pr);
+  const sy = t => pt + (y1 - L10(t)) / (y1 - y0) * (H - pt - pb);
+
+  let g = "";
+  // grid
+  for (let d = x0; d <= x1 + 1e-9; d++) {
+    for (let m = 1; m < 10; m++) {
+      const v = Math.pow(10, d) * m; if (v > PLOT.iMax + 1) break;
+      g += `<line class="grid${m === 1 ? " major" : ""}" x1="${sx(v).toFixed(1)}" y1="${pt}" x2="${sx(v).toFixed(1)}" y2="${H - pb}"/>`;
+    }
+  }
+  for (let d = y0; d <= y1 + 1e-9; d++) {
+    for (let m = 1; m < 10; m++) {
+      const v = Math.pow(10, d) * m; if (v > PLOT.tMax + 1) break;
+      g += `<line class="grid${m === 1 ? " major" : ""}" x1="${pl}" y1="${sy(v).toFixed(1)}" x2="${W - pr}" y2="${sy(v).toFixed(1)}"/>`;
+    }
+  }
+  // axis labels
+  const axLab = v => v >= 1000 ? (v / 1000) + "k" : String(v);
+  for (let d = x0; d <= x1 + 1e-9; d++) {
+    const v = Math.pow(10, d);
+    g += `<text class="axtext" x="${sx(v).toFixed(1)}" y="${H - pb + 15}" text-anchor="middle">${axLab(v)}</text>`;
+  }
+  for (let d = y0; d <= y1 + 1e-9; d++) {
+    const v = Math.pow(10, d);
+    const lab = v >= 1 ? axLab(v) : String(v);
+    g += `<text class="axtext" x="${pl - 7}" y="${(sy(v) + 3.5).toFixed(1)}" text-anchor="end">${lab}</text>`;
+  }
+  g += `<text class="axtitle" x="${(pl + W - pr) / 2}" y="${H - 6}" text-anchor="middle">Current (A, rms symmetrical at 415 V)</text>`;
+  g += `<text class="axtitle" x="${-(pt + H - pb) / 2}" y="13" text-anchor="middle" transform="rotate(-90)">Time (s)</text>`;
+
+  // envelope
+  if (opts.envelope && opts.envelope.length) {
+    const pts = opts.envelope.map(p => `${sx(p[0]).toFixed(1)},${sy(Math.max(p[1], PLOT.tMin)).toFixed(1)}`).join(" ");
+    const last = opts.envelope[opts.envelope.length - 1];
+    g += `<polygon class="envfill" points="${sx(PLOT.iMin).toFixed(1)},${sy(PLOT.tMin).toFixed(1)} ${pts} ${sx(last[0]).toFixed(1)},${sy(PLOT.tMin).toFixed(1)}"/>`;
+    g += `<polyline class="envline" points="${pts}"/>`;
+  }
+  // markers
+  (markers || []).forEach(mk => {
+    if (mk.i < PLOT.iMin || mk.i > PLOT.iMax) return;
+    const x = sx(mk.i).toFixed(1);
+    g += `<line class="marker" x1="${x}" y1="${pt}" x2="${x}" y2="${H - pb}"/>`;
+    g += `<text class="markertext" x="${x}" y="${pt + 4}" transform="rotate(90 ${x} ${pt + 4})" dx="4" dy="-3">${esc(mk.label)} ${fmt(mk.i)} A</text>`;
+  });
+  // curves
+  series.forEach(s => {
+    if (!s.points || !s.points.length) return;
+    const d = s.points.map(p => `${sx(p[0]).toFixed(1)},${sy(p[1]).toFixed(1)}`).join(" ");
+    g += `<polyline class="curve c-${s.key} ${s.cls || ""}" data-key="${s.key}" points="${d}"/>`;
+  });
+  g += `<rect class="frame" x="${pl}" y="${pt}" width="${W - pl - pr}" height="${H - pt - pb}"/>`;
+  g += `<line class="cursor" id="cur" x1="0" y1="${pt}" x2="0" y2="${H - pb}" style="display:none"/>`;
+
+  const legend = series.map(s =>
+    `<button type="button" aria-pressed="true" data-key="${s.key}">
+       <span class="swatch" style="border-top-color:var(--s-${s.key}, var(--${s.key}));${s.dash ? "border-top-style:dashed;" : ""}"></span>${esc(s.label)}
+     </button>`).join("");
+
+  const cells = [`<div class="cell lead"><span class="k">Cursor current</span><span class="v" id="ro-i">&ndash;</span></div>`]
+    .concat(series.map(s => `<div class="cell"><span class="k">${esc(s.short || s.label)}</span><span class="v" data-ro="${s.key}">&ndash;</span></div>`)).join("");
+
+  const id = "c" + Math.random().toString(36).slice(2, 8);
+  return {
+    html: `<div class="chartwrap" id="${id}">
+        <svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Time-current characteristic">${g}</svg>
+        <div class="legend">${legend}</div>
+        <div class="readout">${cells}</div>
+      </div>`,
+    wire: root => {
+      const wrap = root.querySelector("#" + id);
+      if (!wrap) return;
+      const svg = wrap.querySelector("svg"), cur = wrap.querySelector("#cur");
+      wrap.querySelectorAll(".legend button").forEach(b => b.addEventListener("click", () => {
+        const on = b.getAttribute("aria-pressed") === "true";
+        b.setAttribute("aria-pressed", String(!on));
+        const p = svg.querySelector(`[data-key="${b.dataset.key}"]`);
+        if (p) p.classList.toggle("off", on);
+      }));
+      const lookup = (pts, i, step) => {
+        if (!pts || pts.length < 2) return null;
+        if (i < pts[0][0] || i > pts[pts.length - 1][0]) return null;
+        let lo = 0, hi = pts.length - 1;
+        while (hi - lo > 1) { const m = (lo + hi) >> 1; if (pts[m][0] <= i) lo = m; else hi = m; }
+        if (step) return pts[lo][1];
+        const [ia, ta] = pts[lo], [ib, tb] = pts[hi];
+        if (ib === ia) return tb;
+        const f = (L10(i) - L10(ia)) / (L10(ib) - L10(ia));
+        return Math.pow(10, L10(ta) + f * (L10(tb) - L10(ta)));
+      };
+      const move = ev => {
+        const r = svg.getBoundingClientRect();
+        const px = (ev.clientX - r.left) / r.width * W;
+        if (px < pl || px > W - pr) return;
+        const i = Math.pow(10, x0 + (px - pl) / (W - pl - pr) * (x1 - x0));
+        cur.style.display = ""; cur.setAttribute("x1", px.toFixed(1)); cur.setAttribute("x2", px.toFixed(1));
+        wrap.querySelector("#ro-i").innerHTML = fmt(i) + " A";
+        series.forEach(s => {
+          const cell = wrap.querySelector(`[data-ro="${s.key}"]`);
+          if (!cell) return;
+          const t = lookup(s.points, i, s.step);
+          cell.innerHTML = t == null ? "&ndash;" : (t >= 100 ? fmt(t) : t >= 1 ? t.toFixed(2) : t.toFixed(3)) + " s";
+        });
+      };
+      svg.addEventListener("pointermove", move);
+      svg.addEventListener("pointerleave", () => {
+        cur.style.display = "none";
+        wrap.querySelector("#ro-i").innerHTML = "&ndash;";
+        wrap.querySelectorAll("[data-ro]").forEach(c => c.innerHTML = "&ndash;");
+      });
+    }
+  };
+}
+
+/* ---- thermal chart ----------------------------------------------------- */
+function thermalChart(m) {
+  const W = 900, H = 260, pl = 46, pr = 16, pt = 14, pb = 36;
+  const tr = m.thermalTrace;
+  const tmax = Math.max(m.tStart, 1);
+  const ymax = Math.max(1.25, m.settings.thetaHot * 1.12);
+  const sx = t => pl + t / tmax * (W - pl - pr);
+  const sy = v => pt + (1 - v / ymax) * (H - pt - pb);
+  let g = "";
+  for (let v = 0; v <= ymax; v += 0.25) g += `<line class="grid" x1="${pl}" y1="${sy(v).toFixed(1)}" x2="${W - pr}" y2="${sy(v).toFixed(1)}"/><text class="axtext" x="${pl - 6}" y="${(sy(v) + 3.5).toFixed(1)}" text-anchor="end">${v.toFixed(2)}</text>`;
+  const step = tmax > 12 ? 2 : 1;
+  for (let t = 0; t <= tmax + .001; t += step) g += `<line class="grid" x1="${sx(t).toFixed(1)}" y1="${pt}" x2="${sx(t).toFixed(1)}" y2="${H - pb}"/><text class="axtext" x="${sx(t).toFixed(1)}" y="${H - pb + 14}" text-anchor="middle">${t}</text>`;
+  g += `<line class="threshsoft" x1="${pl}" y1="${sy(D.constants.thetaMarginal).toFixed(1)}" x2="${W - pr}" y2="${sy(D.constants.thetaMarginal).toFixed(1)}"/>`;
+  g += `<line class="thresh" x1="${pl}" y1="${sy(1).toFixed(1)}" x2="${W - pr}" y2="${sy(1).toFixed(1)}"/>`;
+  g += `<text class="markertext" x="${W - pr - 4}" y="${(sy(1) - 5).toFixed(1)}" text-anchor="end" style="fill:var(--fail)">trip threshold  &#952; = 1.00</text>`;
+  g += `<text class="markertext" x="${W - pr - 4}" y="${(sy(D.constants.thetaMarginal) - 4).toFixed(1)}" text-anchor="end" style="fill:var(--marg)">margin band ${D.constants.thetaMarginal.toFixed(2)}</text>`;
+  [["cold", "var(--s-thermal)", "5 4"], ["hot", "var(--accent)", ""]].forEach(([k, col, dash]) => {
+    const s = tr[k];
+    const pts = s.t.map((t, i) => `${sx(t).toFixed(1)},${sy(Math.min(s.theta[i], ymax)).toFixed(1)}`).join(" ");
+    g += `<polyline points="${pts}" fill="none" stroke="${col}" stroke-width="2.2" stroke-dasharray="${dash}" stroke-linejoin="round"/>`;
+  });
+  // stage boundaries
+  let acc = 0;
+  m.stages.forEach((st, i) => {
+    if (i === 0 && m.stages.length > 1) { acc += st.duration; g += `<line class="marker" x1="${sx(acc).toFixed(1)}" y1="${pt}" x2="${sx(acc).toFixed(1)}" y2="${H - pb}"/><text class="markertext" x="${sx(acc).toFixed(1)}" y="${pt + 11}" dx="4">star &#8594; delta</text>`; }
+  });
+  g += `<rect class="frame" x="${pl}" y="${pt}" width="${W - pl - pr}" height="${H - pt - pb}"/>`;
+  g += `<text class="axtitle" x="${(pl + W - pr) / 2}" y="${H - 4}" text-anchor="middle">Time from energisation (s)</text>`;
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Thermal replica state during starting">${g}</svg>`;
+}
+
+/* ---- views ------------------------------------------------------------- */
+function motorSeries(m) {
+  return [
+    { key: "device", label: "Relay + MCCB (hot)", short: "Relay hot", points: m.curves.device },
+    { key: "thermal", label: "Thermal (cold)", short: "Thermal cold", points: m.curves.thermalCold, dash: true },
+    { key: "damage", label: "Damage limit (hot)", short: "Damage hot", points: m.curves.damageHot },
+    { key: "damagec", label: "Damage limit (cold)", short: "Damage cold", points: m.curves.damageCold, dash: true },
+    { key: "feeder", label: D.plant.feeder.designation, short: "Incomer", points: D.feederCurve, dash: true }
+  ];
+}
+
+function viewMotor(m) {
+  const s = m.settings, st = m.starting;
+  const designed = m.isStarDelta ? st.starOthers : st.dolOthers;
+  const chart = tccChart(motorSeries(m), m.markers, { envelope: m.curves.envelope });
+
+  const thetaPct = Math.min(s.thetaHot, 1.3) / 1.3 * 100;
+  const thetaCol = s.thetaHot >= 1 ? "var(--fail)" : s.thetaHot > D.constants.thetaMarginal ? "var(--marg)" : "var(--pass)";
+
+  const cards = `<div class="cards">
+    <div class="card">
+      <span class="ansi">49/51</span><h4>Thermal overload</h4>
+      <div class="big">${fmt(s.pickup, 1)}<span class="u">A</span></div>
+      <dl><dt>Multiple of FLC</dt><dd>${s.pickupMultiple.toFixed(2)}</dd>
+          <dt>Trip class</dt><dd>${s.tripClass}</dd>
+          <dt>&#964;</dt><dd>${fmt(s.tau)} s</dd>
+          <dt>&#952; at rated load</dt><dd>${s.thetaRunning.toFixed(3)}</dd></dl>
+    </div>
+    <div class="card">
+      <span class="ansi">51LR</span><h4>Locked rotor / stall</h4>
+      <div class="big">${s.lrTime == null ? "none" : s.lrTime.toFixed(1) + '<span class="u">s</span>'}</div>
+      <dl><dt>Pickup</dt><dd>${fmt(s.lrPickup)} A</dd>
+          <dt>Dwell in start</dt><dd>${s.lrDwell.toFixed(1)} s</dd>
+          <dt>Window</dt><dd>${s.lrWindow[0].toFixed(1)}&ndash;${s.lrWindow[1].toFixed(1)} s</dd></dl>
+    </div>
+    <div class="card">
+      <span class="ansi">50</span><h4>Instantaneous</h4>
+      <div class="big">${fmt(s.instPickup)}<span class="u">A</span></div>
+      <dl><dt>Multiple of LRC</dt><dd>${D.constants.instSet.toFixed(1)}&times;</dd>
+          <dt>Clearing</dt><dd>${s.instClearing.toFixed(2)} s</dd>
+          <dt>Ik min / setting</dt><dd>${(m.fault.minDevice / s.instPickup).toFixed(2)}</dd></dl>
+    </div>
+    <div class="card">
+      <span class="ansi">&#952;</span><h4>Hot-restart thermal state</h4>
+      <div class="big" style="color:${thetaCol}">${s.thetaHot.toFixed(3)}</div>
+      <div class="meter"><i style="width:${thetaPct.toFixed(1)}%;background:${thetaCol}"></i><span class="thresh" style="left:${(1 / 1.3 * 100).toFixed(1)}%"></span></div>
+      <dl><dt>From cold</dt><dd>${s.thetaCold.toFixed(3)}</dd>
+          <dt>Trip threshold</dt><dd>1.000</dd>
+          ${s.tripsHot ? `<dt>Trips at</dt><dd style="color:var(--fail)">${s.tripTime.toFixed(2)} s</dd>` : ""}</dl>
+    </div>
+  </div>`;
+
+  const startRows = [
+    ["DOL", "starting alone", st.dolAlone], ["DOL", "all others running", st.dolOthers],
+    ["Star-delta", "starting alone", st.starAlone], ["Star-delta", "all others running", st.starOthers]
+  ].map(([meth, cond, r]) => [
+    esc(meth), esc(cond),
+    (meth === "Star-delta") === m.isStarDelta ? "&#10003;" : "",
+    r.vBus.toFixed(1), r.vMotor.toFixed(1), fmt(r.iStart), fmt(r.iNameplate), r.torque, badge(r.verdict)
+  ]);
+
+  const reasoning = Object.entries(m.reasoning)
+    .map(([k, v]) => `<h4>${esc(k)}</h4><p>${esc(v)}</p>`).join("");
+
+  const html = `<div class="view">
+    <div class="pagehead">
+      <div>
+        <span class="eyebrow">${esc(m.tag)}</span>
+        <h2>${esc(m.service)}</h2>
+        <div class="rating mono">${m.kw} kW &middot; ${m.voltage} V &middot; FLC ${fmt(m.flc, 1)} A &middot; LRC ${m.lrcMultiple}&times; = ${fmt(m.ilr)} A &middot; ${esc(m.startMethod)} &middot; ${m.tStart} s run-up &middot; ${m.tStallHot} s hot stall withstand</div>
+      </div>
+      <div class="spacer" style="flex:1"></div>
+      <span class="verdict-pill ${vClass(m.verdict)}"><span class="dot"></span>${esc(m.verdict)}</span>
+    </div>
+
+    ${cards}
+
+    ${panel("Time-current characteristic", "Move the pointer across the chart to read every curve at that current", chart.html, true)}
+
+    <div class="callout ${s.tripsHot ? "warn" : ""}">
+      <strong>How to read it.</strong> The relay curve must stay <em>above</em> the shaded starting envelope,
+      <em>below</em> both damage limits, and <em>below</em> the incomer curve.
+      ${s.tripsHot
+        ? `Here it drops into the envelope: the relay reaches its trip threshold ${s.tripTime.toFixed(2)} s into a ${m.tStart} s start, so it trips on every hot restart.`
+        : `The envelope is the time the motor actually spends at or above each current while accelerating &mdash; which is why a star-delta start shows two steps.`}
+    </div>
+
+    ${panel("Thermal replica during starting", "IEC 60255-149 single-time-constant model, integrated stage by stage", thermalChart(m))}
+
+    ${panel("Settings justification", "Every number, and why it has that value", `<div class="prose">${reasoning}</div>`)}
+
+    ${panel("Acceptance checks", "", checksTable(m.checks), true)}
+
+    ${panel("Starting and voltage dip", "Both methods are evaluated so the choice is justified by calculation, not convention",
+      table([{ label: "Method" }, { label: "Condition" }, { label: "Specified" }, { label: "V bus %", num: true },
+             { label: "V motor %", num: true }, { label: "I start A", num: true }, { label: "I nameplate A", num: true },
+             { label: "Torque % rated", num: true }, { label: "Verdict" }], startRows), true)}
+
+    <div class="callout">${esc(m.recommendation)}</div>
+
+    ${panel("Cable and fault data", "", `<div class="grid2">
+      <dl class="kv">
+        <dt>Cable</dt><dd>${m.cable.runs > 1 ? m.cable.runs + " &times; " : ""}${m.cable.size} mm&sup2;, ${m.cable.length} m</dd>
+        <dt>Derated capacity</dt><dd>${fmt(m.cable.iz)} A</dd>
+        <dt>Smallest size that carries FLC</dt><dd>${m.cable.minSize} mm&sup2;</dd>
+        <dt>R at 90 &deg;C</dt><dd>${m.cable.r90.toFixed(2)} m&#8486;</dd>
+        <dt>X</dt><dd>${m.cable.x.toFixed(2)} m&#8486;</dd>
+        <dt>Running voltage drop</dt><dd>${m.cable.vdPct.toFixed(2)} %</dd>
+      </dl>
+      <dl class="kv">
+        <dt>Fault through device, max</dt><dd>${fmt(m.fault.maxDevice)} A</dd>
+        <dt>Total at fault point, max</dt><dd>${fmt(m.fault.maxTotal)} A</dd>
+        <dt>Local motor back-feed</dt><dd>${fmt(m.fault.backfeed)} A</dd>
+        <dt>Fault through device, min</dt><dd>${fmt(m.fault.minDevice)} A</dd>
+        <dt>Locked-rotor impedance</dt><dd>${m.zLr.toFixed(1)} m&#8486;</dd>
+        <dt>Critical transformer rating</dt><dd>${fmt(m.criticalKva)} kVA</dd>
+      </dl></div>`)}
+  </div>`;
+  return { html, wire: chart.wire };
+}
+
+function viewOverview() {
+  const sc = D.shortCircuit, pl = D.plant;
+  const series = D.motors.map((m, i) => ({
+    key: "m" + (i + 1), label: `${m.tag}  ${m.service} (${m.kw} kW)`, short: m.tag, points: m.curves.device
+  })).concat([{ key: "feeder", label: pl.feeder.designation, short: "Incomer", points: D.feederCurve, dash: true }]);
+  const chart = tccChart(series, [
+    { i: pl.transformer.flc, label: "Tx FLC" }, { i: sc.busMax.ik * 1000, label: "Ik max" }
+  ], {});
+
+  const motorRows = D.motors.map(m => [
+    esc(m.tag), esc(m.service), m.kw, fmt(m.flc, 1), fmt(m.ilr), esc(m.startMethod),
+    m.settings.tripClass, m.settings.pickupMultiple.toFixed(2),
+    m.settings.lrTime == null ? "none" : m.settings.lrTime.toFixed(1),
+    fmt(m.settings.instPickup),
+    `<span style="color:${m.settings.thetaHot >= 1 ? "var(--fail)" : m.settings.thetaHot > D.constants.thetaMarginal ? "var(--marg)" : "inherit"}">${m.settings.thetaHot.toFixed(3)}</span>`,
+    badge(m.verdict)
+  ]);
+
+  const findings = D.findings.length
+    ? `<div class="findings">${D.findings.map(f => `<div class="finding">
+        <div class="who">${esc(f.tag)} &middot; ${esc(f.id)}</div>
+        <div><span class="badge ${vClass(f.verdict)}">${esc(f.verdict)}</span> <span class="what">${esc(f.name)}</span></div>
+        <div class="val">${esc(f.value)}</div>
+        ${f.note ? `<div class="note">${esc(f.note)}</div>` : ""}
+      </div>`).join("")}</div>`
+    : `<div class="body"><p>Every check meets its acceptance criterion. The design is coordinated.</p></div>`;
+
+  const html = `<div class="view">
+    <div class="pagehead">
+      <div>
+        <span class="eyebrow">Overview</span>
+        <h2>${esc(D.meta.bus)} &mdash; ${D.motors.length} motors, ${fmt(D.motors.reduce((a, m) => a + m.kw, 0))} kW connected</h2>
+        <div class="rating">Settings evaluated <strong>as ${esc(D.meta.settingsMode)}</strong>. ${esc(D.meta.basis)}</div>
+      </div>
+    </div>
+
+    ${panel(`Findings requiring action (${D.findings.length})`, "Worst first", findings, true)}
+
+    ${panel("Combined bus coordination", "Every motor feeder against the incomer. Toggle a series in the legend, or move the pointer to read all curves at one current", chart.html, true)}
+
+    ${panel("Protection settings", "", table(
+      [{ label: "Tag", tag: true }, { label: "Service" }, { label: "kW", num: true }, { label: "FLC A", num: true },
+       { label: "LRC A", num: true }, { label: "Start" }, { label: "Class", num: true }, { label: "&times;FLC", num: true },
+       { label: "51LR s", num: true }, { label: "50 A", num: true }, { label: "&#952; hot", num: true }, { label: "Verdict" }],
+      motorRows), true)}
+
+    ${panel("Short-circuit study", "IEC 60909-0", `<div class="grid2">
+      <dl class="kv">
+        <dt>Busbar, network only (max)</dt><dd>${sc.busNetwork.ik.toFixed(2)} kA</dd>
+        <dt>Busbar, with motor back-feed</dt><dd><strong>${sc.busMax.ik.toFixed(2)} kA</strong></dd>
+        <dt>Motor uplift</dt><dd>${sc.motorUplift.toFixed(1)} %</dd>
+        <dt>Peak i<sub>p</sub></dt><dd>${sc.busMax.ip.toFixed(1)} kA</dd>
+        <dt>&#954;</dt><dd>${sc.busMax.kappa.toFixed(3)}</dd>
+        <dt>X/R at the bus</dt><dd>${sc.busMax.xr.toFixed(2)}</dd>
+        <dt>Busbar minimum</dt><dd>${sc.busMin.ik.toFixed(2)} kA</dd>
+        <dt>Transformer correction K<sub>T</sub></dt><dd>${sc.kt.toFixed(5)}</dd>
+      </dl>
+      <div class="formula">I_k'' = c &middot; U_n / (&#8730;3 &middot; |Z_k|)        IEC 60909-0 cl. 6.2
+i_p   = &#954; &middot; &#8730;2 &middot; I_k''               IEC 60909-0 cl. 8
+&#954;     = 1.02 + 0.98 e^(&#8722;3R/X)
+K_T   = 0.95 c_max / (1 + 0.6 x_T)  cl. 6.3.3
+Z_M   = U&sup2; / (LRC&times; &middot; S_rM), R/X = 0.42</div>
+    </div>
+    <div class="callout" style="margin-top:16px"><strong>Two duties, opposite purposes.</strong>
+      The maximum duty (c = 1.05, conductors at 20 &deg;C, motors included) sizes equipment.
+      The minimum duty (c = 0.95, conductors at 90 &deg;C, motors excluded because they may be stopped)
+      verifies that protection still operates on the weakest credible fault.</div>`)}
+
+    ${panel("Motor terminal faults", "A motor's own back-feed does not flow through its own device &mdash; it feeds the fault from the load side", table(
+      [{ label: "Tag", tag: true }, { label: "Through device, max A", num: true }, { label: "Total at fault, max A", num: true },
+       { label: "Local back-feed A", num: true }, { label: "Through device, min A", num: true }, { label: "min / max", num: true }],
+      D.motors.map(m => [esc(m.tag), fmt(m.fault.maxDevice), fmt(m.fault.maxTotal), fmt(m.fault.backfeed),
+                         fmt(m.fault.minDevice), (m.fault.minDevice / m.fault.maxDevice).toFixed(3)])), true)}
+  </div>`;
+  return { html, wire: chart.wire };
+}
+
+function viewStarting() {
+  const rows = [];
+  D.motors.forEach(m => {
+    [["DOL", "alone", m.starting.dolAlone], ["DOL", "all others running", m.starting.dolOthers],
+     ["Star-delta", "alone", m.starting.starAlone], ["Star-delta", "all others running", m.starting.starOthers]
+    ].forEach(([meth, cond, r]) => rows.push([
+      esc(m.tag), esc(meth), esc(cond),
+      (meth === "Star-delta") === m.isStarDelta ? "&#10003;" : "",
+      r.vBus.toFixed(1), r.vMotor.toFixed(1), fmt(r.iStart), r.torque, badge(r.verdict)
+    ]));
+  });
+
+  const crit = D.motors.map(m => [
+    esc(m.tag), m.kw, `${m.cable.runs > 1 ? m.cable.runs + "&times;" : ""}${m.cable.size} mm&sup2;, ${m.cable.length} m`,
+    m.starting.dolOthers.vMotor.toFixed(1), fmt(m.criticalKva),
+    (D.plant.transformer.kva / m.criticalKva).toFixed(1) + "&times;"
+  ]);
+
+  const vMin = D.plant.criteria.v_motor_min_pu * 100, bMin = D.plant.criteria.v_bus_min_pu * 100;
+  const dipRows = D.motors.map(m => {
+    const dol = m.starting.dolOthers, star = m.starting.starOthers;
+    const bar = (v, lim) => {
+      const lo = 70, span = 100 - lo;
+      return `<div class="meter" style="height:8px">
+        <i style="width:${Math.max(0, (v - lo) / span * 100).toFixed(1)}%;background:${v < lim ? "var(--fail)" : "var(--accent)"}"></i>
+        <span class="thresh" style="left:${((lim - lo) / span * 100).toFixed(1)}%;background:var(--fail)"></span></div>`;
+    };
+    return [esc(m.tag), m.kw, dol.vMotor.toFixed(1), bar(dol.vMotor, vMin), star.vMotor.toFixed(1), bar(star.vMotor, vMin),
+            dol.vBus.toFixed(1), star.vBus.toFixed(1)];
+  });
+
+  return {
+    html: `<div class="view">
+    <div class="pagehead"><div><span class="eyebrow">Starting study</span>
+      <h2>Motor starting and voltage dip</h2>
+      <div class="rating">IEEE Std 399 constant-impedance network solution. Limits: ${vMin.toFixed(0)}&nbsp;% at the motor terminals, ${bMin.toFixed(0)}&nbsp;% on the bus.</div>
+    </div></div>
+
+    ${panel("Terminal voltage against the limit", `Each motor starting with all others running. The red mark is the ${vMin.toFixed(0)} % limit; the bar spans 70&ndash;100 %`,
+      table([{ label: "Tag", tag: true }, { label: "kW", num: true }, { label: "DOL %", num: true }, { label: "" },
+             { label: "Y-&#916; %", num: true }, { label: "" }, { label: "Bus DOL %", num: true }, { label: "Bus Y-&#916; %", num: true }],
+        dipRows), true)}
+
+    ${panel("Method", "", `<div class="formula">Z_LR     = V_LL / (&#8730;3 I_LR)  at arccos(pf_LR),  pf_LR = 0.25
+Z_branch = Z_cable + Z_LR            star stage: Z_LR &times; 3
+Z_par    = Z_load &#8741; Z_branch        omitted when starting alone
+
+V_bus / V_nom = |Z_par| / |Z_source + Z_par|
+V_motor/V_bus = |Z_LR|  / |Z_branch|
+I_start       = (V_bus/&#8730;3) / |Z_branch|</div>
+    <p style="margin-top:14px">At standstill the machine is a fixed series impedance (slip = 1), so a start is a linear circuit problem rather than a dynamic one. The star stage uses <span class="mono">Z_LR &times; 3</span>: in star each winding sees <span class="mono">U/&#8730;3</span> so winding current falls to <span class="mono">1/&#8730;3</span>, and in delta the line current is <span class="mono">&#8730;3&times;</span> the winding current whereas in star it equals it &mdash; a net line-current ratio of one third. Torque, going as V&sup2;, falls to one third too, which is the real constraint on a star-delta start.</p>`)}
+
+    ${panel("All cases", "Both methods evaluated for every motor, so the starting method is justified by calculation", table(
+      [{ label: "Tag", tag: true }, { label: "Method" }, { label: "Condition" }, { label: "Specified" },
+       { label: "V bus %", num: true }, { label: "V motor %", num: true }, { label: "I start A", num: true },
+       { label: "Torque % rated", num: true }, { label: "Verdict" }], rows), true)}
+
+    ${panel("How much margin is there?", "Transformer rating at which a DOL start would just reach the terminal-voltage limit", table(
+      [{ label: "Tag", tag: true }, { label: "kW", num: true }, { label: "Cable" }, { label: "V motor, DOL %", num: true },
+       { label: "Critical transformer kVA", num: true }, { label: "Margin on rating", num: true }], crit), true)}
+
+    <div class="callout"><strong>Why the margins are this wide.</strong> On an LV bus the motor's own locked-rotor
+      impedance dominates the starting circuit &mdash; for ${esc(D.motors[0].tag)} it is ${D.motors[0].zLr.toFixed(0)} m&#8486;
+      against ${D.plant.zSource.toFixed(1)} m&#8486; of source impedance. The terminal voltage during a start is therefore set
+      mainly by the machine itself, and the supply can be weakened a long way before the criterion binds.
+      <strong>On this class of installation the binding constraints are thermal, not voltage.</strong>
+      A dip study that returns all passes is the expected result for a transformer sized to its load; it becomes the
+      critical study when the largest motor approaches about a quarter of the transformer rating, or when cables are long.</div>
+  </div>`, wire: () => {}
+  };
+}
+
+function viewPlant() {
+  const pl = D.plant, t = pl.transformer, f = pl.feeder;
+  const cableRows = D.motors.map(m => [
+    esc(m.tag), `${m.cable.runs > 1 ? m.cable.runs + "&times;" : ""}${m.cable.size} mm&sup2;`, m.cable.length,
+    fmt(m.flc, 1), fmt(m.cable.iz), m.cable.minSize, m.cable.r90.toFixed(2), m.cable.x.toFixed(2), m.cable.vdPct.toFixed(2)
+  ]);
+  return {
+    html: `<div class="view">
+    <div class="pagehead"><div><span class="eyebrow">Plant</span>
+      <h2>Network data and plant-level checks</h2>
+      <div class="rating">${esc(D.meta.basis)}</div></div></div>
+
+    ${panel("Source, transformer and busbar", "", `<div class="grid2">
+      <dl class="kv">
+        <dt>Utility fault level at ${t.hv} kV</dt><dd>${fmt(pl.source.faultMva)} MVA</dd>
+        <dt>Utility X/R</dt><dd>${pl.source.xr}</dd>
+        <dt>Transformer</dt><dd>${fmt(t.kva)} kVA ${t.hv} kV / ${t.lv} V ${esc(t.group)}</dd>
+        <dt>Impedance voltage u<sub>k</sub></dt><dd>${t.uk} %</dd>
+        <dt>Load loss</dt><dd>${t.loadLoss} kW</dd>
+        <dt>R from load loss</dt><dd>${t.rPct.toFixed(3)} %</dd>
+        <dt>X = &#8730;(Z&sup2; &#8722; R&sup2;)</dt><dd>${t.xPct.toFixed(3)} %</dd>
+        <dt>Transformer X/R</dt><dd>${t.xr.toFixed(2)}</dd>
+        <dt>Secondary FLC</dt><dd>${fmt(t.flc, 1)} A</dd>
+        <dt>Total source impedance</dt><dd>${pl.zSource.toFixed(2)} m&#8486;</dd>
+      </dl>
+      <dl class="kv">
+        <dt>Busbar</dt><dd>${pl.bus.voltage} V, ${pl.bus.frequency} Hz</dd>
+        <dt>Short-time withstand</dt><dd>${pl.bus.icw} kA</dd>
+        <dt>Static load</dt><dd>${fmt(pl.staticLoad.kva)} kVA at pf ${pl.staticLoad.pf}</dd>
+        <dt>Motor diversity</dt><dd>${pl.diversity}</dd>
+        <dt>Connected</dt><dd>${fmt(pl.loading.connected)} kVA</dd>
+        <dt>Diversified</dt><dd>${fmt(pl.loading.diversified)} kVA at pf ${pl.loading.pf.toFixed(3)}</dd>
+        <dt>Transformer loading</dt><dd>${pl.loading.pct.toFixed(1)} %</dd>
+        <dt>Worst start on the bus</dt><dd>${esc(D.worstStart.tag)}, ${fmt(D.worstStart.current)} A</dd>
+      </dl></div>`)}
+
+    ${panel("Incoming feeder breaker", esc(f.designation), `<dl class="kv" style="max-width:520px">
+      <dt>Frame / breaking capacity</dt><dd>${fmt(f.frame)} A / ${f.icu} kA</dd>
+      <dt>Long time I<sub>r</sub> / t<sub>r</sub></dt><dd>${fmt(f.ir)} A / ${f.tr} s at 6&times;I<sub>r</sub></dd>
+      <dt>Short time I<sub>sd</sub> / t<sub>sd</sub></dt><dd>${fmt(f.isd)} A / ${f.tsd} s</dd>
+      <dt>Instantaneous I<sub>i</sub></dt><dd>${f.ii == null ? "OFF" : fmt(f.ii) + " A"}</dd>
+    </dl>
+    ${f.ii == null ? `<div class="callout" style="margin-top:14px"><strong>The instantaneous element is deliberately off.</strong>
+      On a main incomer it would operate simultaneously with every downstream motor MCCB for a bus-side fault and destroy
+      selectivity. The short-time band, delayed ${f.tsd} s, provides busbar protection instead and gives
+      ${(f.tsd - 0.03).toFixed(2)} s over the motor MCCBs against a ${D.constants.cti} s required interval.</div>` : ""}`)}
+
+    ${panel("Plant-level checks", "", checksTable(D.plantChecks), true)}
+
+    ${panel("Cable schedule", "Copper, XLPE, 0.6/1 kV. Derated capacity is the tabulated value &times; 0.91 ambient &times; 0.85 grouping", table(
+      [{ label: "Tag", tag: true }, { label: "Size" }, { label: "Length m", num: true }, { label: "FLC A", num: true },
+       { label: "I&#7827; derated A", num: true }, { label: "Minimum size mm&sup2;", num: true },
+       { label: "R at 90&deg;C m&#8486;", num: true }, { label: "X m&#8486;", num: true }, { label: "&#916;V %", num: true }],
+      cableRows), true)}
+
+    ${panel("Conventions", "", `<p>All impedances are complex ohms per phase, star-equivalent, referred to ${pl.bus.voltage} V.
+      Network reduction uses complex admittance summation, never addition of magnitudes: the network X/R is
+      ${D.shortCircuit.busMax.xr.toFixed(1)} while an LV motor is 2.4, so the contributions do not add in phase.</p>
+      <p>Conductor resistance is taken at 20 &deg;C for <strong>maximum</strong> fault current (equipment rating duty) and at
+      90 &deg;C for <strong>minimum</strong> fault current and voltage-drop work (protection sensitivity duty). The ratio is
+      1.2751, a larger effect than skin effect at these cross-sections.</p>
+      <p>Starting currents used for <strong>protection settings</strong> are on a nameplate basis, the largest current a relay
+      could see. Currents used for the <strong>dip study</strong> are the achieved values from the network solution, which are
+      lower because of the supply impedance drop.</p>`)}
+  </div>`, wire: () => {}
+  };
+}
+
+/* ---- shell ------------------------------------------------------------- */
+const VIEWS = [
+  { id: "overview", tag: "⌂", label: "Overview", build: viewOverview, group: "Study" },
+  { id: "starting", tag: "↗", label: "Starting study", build: viewStarting, group: "Study" },
+  { id: "plant", tag: "▦", label: "Plant data", build: viewPlant, group: "Study" }
+];
+D.motors.forEach(m => VIEWS.push({
+  id: m.tag, tag: m.tag, label: m.service, verdict: m.verdict, group: "Motors",
+  build: () => viewMotor(m)
+}));
+
+function buildRail() {
+  const rail = document.getElementById("rail");
+  let group = null;
+  VIEWS.forEach(v => {
+    if (v.group !== group) { group = v.group; rail.appendChild(el("div", { class: "eyebrow" }, group)); }
+    const b = el("button", { class: "navitem", type: "button", "data-id": v.id });
+    b.innerHTML = `<span class="tag">${esc(v.tag)}</span><span class="lbl">${esc(v.label)}</span>` +
+      (v.verdict ? `<span class="dot ${vClass(v.verdict)}" style="color:var(--${v.verdict === "PASS" ? "pass" : v.verdict === "FAIL" ? "fail" : "marg"});background:currentColor"></span>` : "");
+    b.addEventListener("click", () => show(v.id));
+    rail.appendChild(b);
+  });
+}
+
+function buildStrip() {
+  const sc = D.shortCircuit, pl = D.plant, c = D.counts;
+  const stats = [
+    { k: "Bus fault Ik″", v: sc.busMax.ik.toFixed(2), u: "kA", n: `${sc.busNetwork.ik.toFixed(1)} kA network + ${sc.motorUplift.toFixed(0)} % motors` },
+    { k: "Peak iₚ", v: sc.busMax.ip.toFixed(1), u: "kA", n: `κ = ${sc.busMax.kappa.toFixed(2)}` },
+    { k: "Transformer", v: fmt(pl.transformer.kva), u: "kVA", n: `${pl.loading.pct.toFixed(0)} % loaded` },
+    { k: "Motors", v: D.motors.length, u: "", n: `${fmt(D.motors.reduce((a, m) => a + m.kw, 0))} kW connected` },
+    { k: "Checks passed", v: c.PASS || 0, u: `/ ${Object.values(c).reduce((a, b) => a + b, 0)}`, n: `${c.MARGINAL || 0} marginal, ${c.FAIL || 0} fail` }
+  ];
+  document.getElementById("strip").innerHTML = stats.map(s =>
+    `<div class="stat"><div class="k">${s.k}</div><div class="v">${s.v}<span class="u">${s.u}</span></div><div class="n">${s.n}</div></div>`).join("");
+}
+
+let current = null;
+function show(id) {
+  const v = VIEWS.find(x => x.id === id) || VIEWS[0];
+  current = v.id;
+  const out = v.build();
+  const pane = document.getElementById("pane");
+  pane.innerHTML = out.html;
+  if (out.wire) out.wire(pane);
+  document.querySelectorAll(".navitem").forEach(b =>
+    b.setAttribute("aria-current", String(b.dataset.id === v.id)));
+  window.scrollTo({ top: 0, behavior: "auto" });
+}
+
+document.getElementById("ttl").textContent = D.meta.bus + " — Protection Coordination Study";
+document.getElementById("sub").textContent =
+  `${D.meta.project} · Rev ${D.meta.revision} · ${D.meta.generated} · settings as ${D.meta.settingsMode}`;
+const vp = document.getElementById("verdict");
+vp.className = "verdict-pill " + vClass(D.overall);
+document.getElementById("verdicttext").textContent = D.overall;
+if (D.meta.scenario) {
+  const s = document.getElementById("scenario");
+  s.hidden = false; s.textContent = "scenario: " + D.meta.scenario;
+  s.title = D.meta.scenarioDescription || "";
+}
+buildStrip();
+buildRail();
+show("overview");
+</script>

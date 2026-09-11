@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+.env
+
+# Generated study outputs. Regenerate with: python main.py
+output/
+output_*/
+
+.vscode/
+.idea/
+.DS_Store

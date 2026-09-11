@@ -1,0 +1,290 @@
+# ===========================================================================
+# Motor Protection Coordination & Starting Study
+# 415 V industrial plant bus fed from an 11 kV / 415 V, 1000 kVA transformer
+# ===========================================================================
+#
+# Data provenance tags used throughout:
+#   STANDARD  - taken from a published standard, cited in src/constants.py
+#   DESIGN    - a design decision made by this study, justified in the report
+#   VENDOR    - representative manufacturer data; REPLACE with the actual
+#               nameplate / test certificate / datasheet before issue
+#
+# All impedances are handled internally as complex ohms per phase referred to
+# the 415 V side. Nothing in this file is pre-computed: full-load currents,
+# cable impedances, locked-rotor impedances and every protection setting are
+# derived by the code from the quantities given here.
+
+meta:
+  project: 415 V Industrial Plant Bus - Motor Protection & Starting Study
+  bus_designation: MCC-01
+  revision: A
+  prepared_by: Electrical Engineering
+  basis: IEC 60909-0, IEC 60947-4-1, IEC 60255-149, IEC 60364-5-52, IEEE Std 242, IEEE Std 399
+
+# ---------------------------------------------------------------------------
+# Upstream utility source at 11 kV
+# ---------------------------------------------------------------------------
+# The source is modelled as a Thevenin equivalent behind the transformer.
+# Referring it to the LV side needs no turns-ratio arithmetic because
+# Z = V^2/S is evaluated directly with the LV voltage (the ratio squared
+# cancels between V^2 and the MVA base).
+source:
+  fault_mva: 250.0        # VENDOR - obtain from the utility/DISCOM fault level letter
+  x_over_r: 10.0          # VENDOR - typical for an 11 kV distribution feeder
+
+# ---------------------------------------------------------------------------
+# Distribution transformer
+# ---------------------------------------------------------------------------
+# R is derived from the load (copper) loss:  R_pu = P_loss / S_rated
+# X follows from  X = sqrt(Z^2 - R^2)  with  Z_pu = u_k / 100
+transformer:
+  kva: 1000.0
+  hv_kv: 11.0
+  lv_v: 415.0
+  vector_group: Dyn11
+  uk_pct: 5.0             # VENDOR - impedance voltage from the test certificate
+  load_loss_kw: 10.5      # VENDOR - copper loss at rated current, 75 degC
+  no_load_loss_kw: 1.3    # VENDOR - informational only, not used in the calcs
+
+bus:
+  nominal_v: 415.0
+  frequency_hz: 50.0
+  # Withstand rating of the installed switchboard, checked against the
+  # calculated fault duty in src/checks.py.
+  rated_short_time_withstand_ka: 36.0   # VENDOR - switchboard type-test rating
+
+# ---------------------------------------------------------------------------
+# Non-motor load on the same bus (lighting, HVAC, small power, sockets)
+# ---------------------------------------------------------------------------
+# Modelled as a constant impedance at nominal voltage during the starting
+# study. Constant impedance is the conservative choice for a voltage-dip
+# study: a constant-power model would draw more current as the voltage falls
+# and is used for load-flow work, not for a sub-second dip.
+static_load:
+  kva: 150.0
+  pf: 0.90
+
+# Applied to the motor group when computing transformer loading and the
+# running load for the "largest motor starting with all others running" case.
+# Not all motors sit at 100 per cent shaft load simultaneously.
+motor_diversity_factor: 0.90
+
+# ---------------------------------------------------------------------------
+# Motors
+# ---------------------------------------------------------------------------
+# kw                  Rated SHAFT output power (IEC 60034-1 rating).
+# efficiency, pf      At rated load, from the nameplate / test certificate.
+# lrc_multiple        Locked-rotor current as a multiple of FLC, I_LR/I_FLC.
+#                     IEC 60034-12 design N machines are typically 6.0-7.5.
+# t_start_s           Total run-up time to rated speed at rated voltage, from
+#                     a motor/load torque-speed study. For a star-delta start
+#                     this is the TOTAL time including both stages.
+# t_star_s            Duration of the star stage (star-delta starters only).
+#                     The delta stage is t_start_s - t_star_s.
+# t_stall_hot_s       Locked-rotor withstand time from the hot (rated running
+#                     temperature) condition, at rated voltage. This is the
+#                     binding thermal limit and is a nameplate quantity.
+# t_stall_cold_s      Locked-rotor withstand from the cold condition.
+# trip_class          Trip class specified by the designer. The tool also runs
+#                     an independent setting search and reports where its
+#                     recommendation differs, with the reason.
+# ol_pickup_multiple  Thermal overload pickup as a multiple of FLC, as
+#                     specified. Likewise re-checked by the setting search.
+#
+# Start times and stall withstand times are VENDOR data. They are the only
+# inputs that cannot be derived or cross-checked from a standard, and every
+# protection setting depends on them, so they are the first numbers to
+# confirm against the motor datasheets.
+
+motors:
+  - tag: M1
+    service: Boiler feed pump
+    kw: 200.0
+    voltage_v: 415.0
+    efficiency: 0.958
+    pf: 0.88
+    lrc_multiple: 6.5
+    start_method: star-delta
+    t_start_s: 9.0
+    t_star_s: 6.0
+    t_stall_hot_s: 18.0
+    t_stall_cold_s: 32.0
+    trip_class: 20
+    ol_pickup_multiple: 1.10
+    cable:
+      size_mm2: 240
+      length_m: 45.0
+      runs: 1
+
+  - tag: M2
+    service: Cooling water pump
+    kw: 132.0
+    voltage_v: 415.0
+    efficiency: 0.952
+    pf: 0.87
+    lrc_multiple: 6.0
+    start_method: dol
+    t_start_s: 5.0
+    t_stall_hot_s: 14.0
+    t_stall_cold_s: 25.0
+    trip_class: 20
+    ol_pickup_multiple: 1.10
+    cable:
+      size_mm2: 120
+      length_m: 60.0
+      runs: 1
+
+  - tag: M3
+    service: Induced draught fan (high inertia)
+    kw: 90.0
+    voltage_v: 415.0
+    efficiency: 0.947
+    pf: 0.86
+    lrc_multiple: 6.5
+    start_method: star-delta
+    t_start_s: 14.0
+    t_star_s: 10.0
+    t_stall_hot_s: 15.0
+    t_stall_cold_s: 28.0
+    trip_class: 30
+    ol_pickup_multiple: 1.10
+    cable:
+      size_mm2: 70
+      length_m: 80.0
+      runs: 1
+
+  - tag: M4
+    service: Instrument air compressor
+    kw: 55.0
+    voltage_v: 415.0
+    efficiency: 0.935
+    pf: 0.85
+    lrc_multiple: 7.0
+    start_method: dol
+    t_start_s: 4.0
+    t_stall_hot_s: 10.0
+    t_stall_cold_s: 20.0
+    trip_class: 10
+    ol_pickup_multiple: 1.10
+    cable:
+      size_mm2: 35
+      length_m: 35.0
+      runs: 1
+
+  - tag: M5
+    service: Process transfer pump
+    kw: 37.0
+    voltage_v: 415.0
+    efficiency: 0.925
+    pf: 0.84
+    lrc_multiple: 6.5
+    start_method: dol
+    t_start_s: 3.0
+    t_stall_hot_s: 11.0
+    t_stall_cold_s: 20.0
+    trip_class: 10
+    ol_pickup_multiple: 1.10
+    cable:
+      size_mm2: 25
+      length_m: 100.0
+      runs: 1
+
+# ---------------------------------------------------------------------------
+# Incoming feeder circuit breaker (air circuit breaker, electronic trip unit)
+# ---------------------------------------------------------------------------
+# Parameter names follow IEC 60947-2:
+#   ir_a   long-time pickup            tr_s   long-time delay at 6 x Ir
+#   isd_a  short-time pickup           tsd_s  short-time delay
+#   ii_a   instantaneous pickup        null = element switched OFF
+#
+# The instantaneous element is deliberately switched OFF. On a main incomer it
+# would operate simultaneously with every downstream motor MCCB for a bus-side
+# fault and destroy selectivity; the short-time band with its 0.20 s delay
+# provides the busbar protection instead. This is standard practice for an
+# incomer feeding a bus of motor starters and is verified by check C9.
+feeder_breaker:
+  designation: ACB-01 (incomer)
+  frame_a: 1600.0
+  icu_ka: 50.0            # VENDOR - rated ultimate breaking capacity
+  ir_a: 1400.0            # DESIGN  - 1.006 x transformer secondary FLC
+  tr_s: 10.0              # DESIGN  - long-time delay at 6 x Ir, I^2*t band
+  isd_a: 8400.0           # DESIGN  - 6 x Ir, above the worst-case bus inrush
+  tsd_s: 0.20             # DESIGN  - definite time, gives 0.17 s over the
+                          #           motor MCCBs (0.03 s) vs a 0.15 s CTI
+  ii_a: null              # DESIGN  - OFF, see note above
+
+# Typical motor-circuit MCCB frames available, used for the breaking-capacity
+# selection in src/checks.py. VENDOR.
+mccb_frames:
+  - {frame_a: 100, icu_ka: 36}
+  - {frame_a: 160, icu_ka: 36}
+  - {frame_a: 250, icu_ka: 36}
+  - {frame_a: 400, icu_ka: 50}
+  - {frame_a: 630, icu_ka: 50}
+
+# ---------------------------------------------------------------------------
+# Acceptance criteria
+# ---------------------------------------------------------------------------
+# Each threshold maps to one numbered check in the report. Defaults follow the
+# standards cited in src/constants.py; they are exposed here so the study can
+# be re-run against a client specification with different limits.
+criteria:
+  v_motor_min_pu: 0.80        # IEEE Std 399 Ch.9 - torque goes as V^2, so 80 per
+                              # cent terminal volts leaves 64 per cent of rated
+                              # starting torque
+  v_bus_min_pu: 0.85          # IEC 60947-4-1 - AC-3 contactors must hold in at
+                              # 85 per cent of Uc; a deeper bus dip risks
+                              # dropping every starter on the board
+  max_voltage_drop_pct: 5.0   # IEC 60364-5-52 Annex G, steady state
+  transformer_max_loading_pct: 80.0   # DESIGN - headroom for future load
+
+# ---------------------------------------------------------------------------
+# Sensitivity scenarios
+# ---------------------------------------------------------------------------
+# Applied as dotted-path overrides on the base case. Run with:
+#     python main.py --scenario weak_source
+scenarios:
+  weak_source:
+    description: >
+      Contingency case: the plant runs on a 630 kVA standby transformer with
+      the utility fault level fallen to 100 MVA. Shows how far the margins
+      move when source stiffness is halved. The transformer loading check is
+      the one that fails here; the voltage-dip criteria still pass, because
+      at these ratings the motor's own locked-rotor impedance dominates the
+      starting circuit rather than the supply impedance.
+    overrides:
+      transformer.kva: 630.0
+      transformer.uk_pct: 4.5
+      transformer.load_loss_kw: 7.6
+      source.fault_mva: 100.0
+      feeder_breaker.ir_a: 900.0
+      feeder_breaker.isd_a: 5400.0
+
+  m1_dol:
+    description: >
+      M1 (200 kW boiler feed pump) started direct-on-line instead of
+      star-delta, on the base-case source. Quantifies what the star-delta
+      starter actually buys, so the choice of starting method is justified by
+      calculation rather than by convention. The DOL run-up is shorter than
+      the star-delta one because full-voltage torque is three times the star
+      value.
+    overrides:
+      motors.M1.start_method: dol
+      motors.M1.t_start_s: 4.5
+
+  worst_case_start:
+    description: >
+      The question an operator actually asks: can the 200 kW boiler feed pump
+      be started direct-on-line while the plant is running on the 630 kVA
+      standby transformer? Combines the weak source with a DOL start of the
+      largest machine, and is the case in which the terminal-voltage criterion
+      is expected to bind.
+    overrides:
+      transformer.kva: 630.0
+      transformer.uk_pct: 4.5
+      transformer.load_loss_kw: 7.6
+      source.fault_mva: 100.0
+      feeder_breaker.ir_a: 900.0
+      feeder_breaker.isd_a: 5400.0
+      motors.M1.start_method: dol
+      motors.M1.t_start_s: 4.5
