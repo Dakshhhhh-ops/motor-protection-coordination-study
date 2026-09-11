@@ -12,3 +12,6 @@ output_*/
 .vscode/
 .idea/
 .DS_Store
+
+# Vercel build artefacts
+.vercel/
