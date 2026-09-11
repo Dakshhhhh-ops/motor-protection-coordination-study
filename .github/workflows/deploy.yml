@@ -1,0 +1,116 @@
+name: Study
+
+# Runs the test suite, regenerates the whole study from source, and publishes
+# the interactive viewer to GitHub Pages. Nothing generated is committed to the
+# repository - the published site is always rebuilt from the calculation
+# engine, so it cannot drift from the code that produced it.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  test:
+    name: Tests (Python ${{ matrix.python }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run the test suite
+        run: python -m pytest -q
+
+  build:
+    name: Build the study
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # main.py exits 1 when an acceptance check fails. For this study that is
+      # the expected result: the base case is an audit of an as-specified
+      # design and it finds two genuine failures. A failing CHECK is an
+      # engineering finding, not a broken build, so exit 1 is accepted here
+      # while exit 2 (bad input, missing file) still fails the job.
+      - name: Generate the base-case study
+        run: |
+          python main.py || status=$?
+          if [ "${status:-0}" -gt 1 ]; then
+            echo "::error::main.py failed with exit ${status} (input or tool error)"
+            exit "${status}"
+          fi
+          echo "Base case generated (exit ${status:-0})."
+
+      - name: Generate the coordinated design
+        run: python main.py --settings recommended --outdir output/recommended
+
+      - name: Generate the sensitivity scenarios
+        run: |
+          for s in weak_source m1_dol worst_case_start; do
+            python main.py --scenario "$s" --outdir "output/scenario-$s" --no-figures \
+              || status=$?
+            if [ "${status:-0}" -gt 1 ]; then exit "${status}"; fi
+            unset status
+          done
+
+      # The Pages site root is the interactive viewer, so the bare URL opens
+      # the study. The report, figures and CSV exports stay reachable beneath.
+      - name: Lay out the site
+        run: |
+          cp output/viewer/index.html output/index.html
+          touch output/.nojekyll
+          echo "--- site contents ---"
+          find output -maxdepth 2 -type f | sort | head -40
+          du -sh output
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: output
+
+  deploy:
+    name: Deploy to Pages
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

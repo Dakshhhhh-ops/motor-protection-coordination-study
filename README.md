@@ -12,7 +12,20 @@ formula carries the standard clause it came from, in the code and in the report.
 publishes three ways: a markdown/PDF report, matplotlib TCC sheets, and a
 self-contained interactive viewer, all driven from the same engine.
 
-**[▸ Open the interactive study](https://claude.ai/code/artifact/cd6c09ad-4a01-43b4-beec-c559e4e70fd9)**
+[![Study](https://github.com/Dakshhhhh-ops/motor-protection-coordination-study/actions/workflows/deploy.yml/badge.svg)](https://github.com/Dakshhhhh-ops/motor-protection-coordination-study/actions/workflows/deploy.yml)
+
+**[▸ Open the live study](https://dakshhhhh-ops.github.io/motor-protection-coordination-study/)**
+
+The site is rebuilt from source on every push: CI runs the 224 tests, regenerates the
+study, and publishes it. Nothing generated is committed, so the published result cannot
+drift from the code that produced it.
+
+| | |
+|---|---|
+| [Interactive viewer](https://dakshhhhh-ops.github.io/motor-protection-coordination-study/) | the study, with live TCC curves |
+| [Written report](https://dakshhhhh-ops.github.io/motor-protection-coordination-study/report.html) | full narrative, print to PDF |
+| [Coordinated design](https://dakshhhhh-ops.github.io/motor-protection-coordination-study/recommended/report.html) | the same bus with the tool's own settings applied |
+| [Weak-source case](https://dakshhhhh-ops.github.io/motor-protection-coordination-study/scenario-weak_source/report.html) | 630 kVA standby transformer |
 
 ![Combined bus TCC](docs/tcc_bus_combined.png)
 
